@@ -53,16 +53,42 @@ interface WindowStore {
   cycleFocus: () => void;
 }
 
-const DEFAULT_BOUNDS: Record<AppId, Bounds> = {
-  browser: { x: 80, y: 40, w: 900, h: 560 },
-  files: { x: 120, y: 60, w: 780, h: 500 },
-  shell: { x: 160, y: 100, w: 720, h: 420 },
-  editor: { x: 100, y: 50, w: 860, h: 540 },
-  notes: { x: 140, y: 80, w: 700, h: 480 },
-  excel: { x: 110, y: 70, w: 880, h: 520 },
-  settings: { x: 200, y: 90, w: 640, h: 520 },
-  assistant: { x: 280, y: 60, w: 400, h: 480 },
+const DEFAULT_SIZE: Record<AppId, Pick<Bounds, "w" | "h">> = {
+  browser: { w: 900, h: 560 },
+  files: { w: 780, h: 500 },
+  shell: { w: 720, h: 420 },
+  editor: { w: 860, h: 540 },
+  notes: { w: 700, h: 480 },
+  excel: { w: 880, h: 520 },
+  settings: { w: 640, h: 520 },
+  assistant: { w: 400, h: 480 },
 };
+
+const FALLBACK_TASKBAR_H = 48;
+
+function taskbarHeightPx(): number {
+  if (typeof window === "undefined") return FALLBACK_TASKBAR_H;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--os-taskbar-h").trim();
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? n : FALLBACK_TASKBAR_H;
+}
+
+/** Center in the desktop (viewport minus taskbar), with a light cascade for duplicates. */
+function centeredBounds(appId: AppId, cascadeIndex: number): Bounds {
+  const size = DEFAULT_SIZE[appId];
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const taskbar = taskbarHeightPx();
+  const deskH = Math.max(200, vh - taskbar);
+  const w = Math.min(size.w, Math.max(320, vw - 40));
+  const h = Math.min(size.h, Math.max(200, deskH - 40));
+  const cascade = (cascadeIndex % 8) * 24;
+  let x = Math.round((vw - w) / 2) + cascade;
+  let y = Math.round((deskH - h) / 2) + cascade;
+  x = Math.max(0, Math.min(x, vw - Math.min(w, 320)));
+  y = Math.max(0, Math.min(y, deskH - Math.min(h, 200)));
+  return { x, y, w, h };
+}
 
 export const APP_META: Record<
   AppId,
@@ -82,11 +108,6 @@ let idCounter = 0;
 function uid() {
   idCounter += 1;
   return `win-${Date.now()}-${idCounter}`;
-}
-
-function offsetBounds(base: Bounds, n: number): Bounds {
-  const o = (n % 8) * 24;
-  return { ...base, x: base.x + o, y: base.y + o };
 }
 
 export const useWindowStore = create<WindowStore>((set, get) => ({
@@ -113,17 +134,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     const { windows, nextZ } = get();
     const same = windows.filter((w) => w.appId === appId).length;
     const id = uid();
-    const base = offsetBounds(DEFAULT_BOUNDS[appId], same);
-    const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-    const taskbar = 48;
-    const bounds = {
-      ...base,
-      w: Math.min(base.w, Math.max(320, vw - 40)),
-      h: Math.min(base.h, Math.max(200, vh - taskbar - 40)),
-      x: Math.min(base.x, Math.max(0, vw - 320)),
-      y: Math.min(base.y, Math.max(0, vh - taskbar - 200)),
-    };
+    const bounds = centeredBounds(appId, same);
     const record: WindowRecord = {
       id,
       appId,

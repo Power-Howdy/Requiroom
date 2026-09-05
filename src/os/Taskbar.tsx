@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { Bell, Grid3X3, Sparkles } from "lucide-react";
 import { AppIcon } from "./AppIcon";
+import { GithubIcon } from "./GithubIcon";
 import { APP_META, useWindowStore, type AppId } from "@/store/windowStore";
 import { useNotifStore } from "@/store/notifStore";
+import { openGithubInBrowser } from "./openGithub";
+import { siteConfig } from "@/lib/site";
 
 const LAUNCHERS: AppId[] = [
   "browser",
@@ -94,6 +97,16 @@ export function Taskbar() {
           <span className="truncate max-w-[100px] text-xs">{w.title}</span>
         </button>
       ))}
+
+      <button
+        type="button"
+        className="os-task-btn"
+        onClick={openGithubInBrowser}
+        aria-label="GitHub repository"
+        title={`GitHub — ${siteConfig.githubUrl}`}
+      >
+        <GithubIcon size={18} />
+      </button>
 
       <button
         type="button"

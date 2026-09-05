@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useWindowStore } from "@/store/windowStore";
 import { useNotifStore } from "@/store/notifStore";
 import { AppShell } from "@/components/ui";
-import { clearBrowserData, registerBrowserServiceWorker } from "@/browser/registerSw";
 import { BrowserChrome } from "./BrowserChrome";
 import {
   BROWSER_HOME,
@@ -33,13 +32,8 @@ export function BrowserApp({ windowId }: { windowId: string }) {
   const [activeId, setActiveId] = useState(() => tabs[0].id);
   const [address, setAddress] = useState("");
   const [frameNonce, setFrameNonce] = useState(0);
-  const [swReady, setSwReady] = useState(false);
 
   const active = tabs.find((t) => t.id === activeId) || tabs[0];
-
-  useEffect(() => {
-    void registerBrowserServiceWorker().then((reg) => setSwReady(!!reg));
-  }, []);
 
   useEffect(() => {
     setAddress(active?.url === BROWSER_HOME ? "" : active?.url || "");
@@ -50,9 +44,11 @@ export function BrowserApp({ windowId }: { windowId: string }) {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ windowId: string; url: string }>).detail;
       if (!detail || detail.windowId !== windowId) return;
+      const url = normalizeBrowseUrl(detail.url);
       setTabs((prev) =>
-        prev.map((t) => (t.id === activeId ? pushUrl(t, detail.url) : t)),
+        prev.map((t) => (t.id === activeId ? pushUrl(t, url) : t)),
       );
+      setFrameNonce((n) => n + 1);
     };
     window.addEventListener("requiroom:navigate", handler);
     return () => window.removeEventListener("requiroom:navigate", handler);
@@ -104,23 +100,7 @@ export function BrowserApp({ windowId }: { windowId: string }) {
         }}
         onAddressChange={setAddress}
         onNavigate={() => navigate(address || BROWSER_HOME)}
-        onClearData={async () => {
-          await clearBrowserData("all");
-          setFrameNonce((n) => n + 1);
-          notify({
-            title: "Browsing data cleared",
-            body: "Cookies and HTTP cache removed.",
-            level: "success",
-            appId: "browser",
-            windowId,
-          });
-        }}
       />
-      {!swReady && (
-        <div className="px-3 py-1 text-[11px] text-amber-200/90 bg-amber-500/10 border-b border-amber-500/20">
-          Starting browser session (cookies & cache)…
-        </div>
-      )}
       <iframe
         key={`${active.url}-${active.id}-${frameNonce}`}
         title={active.title}

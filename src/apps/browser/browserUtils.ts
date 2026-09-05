@@ -1,32 +1,41 @@
 export const BROWSER_HOME = "about:home";
 
+const START_LINKS = [
+  { href: "https://free-dev-tools.com/", label: "DevToolBox" },
+  { href: "https://text-tools-iota.vercel.app/", label: "TextTools" },
+  { href: "https://image-tools-blue-eta.vercel.app/", label: "ImageTools" },
+  { href: "https://severus.guru/", label: "Severus" },
+] as const;
+
 export function browserHomeHtml(): string {
+  const links = START_LINKS.map((l) => `<a href="${l.href}">${l.label}</a>`).join(
+    "\n",
+  );
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Requiroom Start</title>
 <style>
 body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:40px}
-h1{font-size:28px;margin:0 0 8px}p{opacity:.8}
+h1{font-size:28px;margin:0 0 8px}p{opacity:.8;max-width:42rem;line-height:1.5}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:24px}
 a{display:block;padding:16px;background:#1e293b;border-radius:12px;color:#93c5fd;text-decoration:none}
 a:hover{background:#334155}
-.note{margin-top:32px;padding:16px;background:#1e293b;border-radius:12px;font-size:14px;opacity:.85}
+.note{margin-top:32px;padding:16px;background:#1e293b;border-radius:12px;font-size:14px;opacity:.85;max-width:42rem;line-height:1.45}
 </style></head><body>
 <h1>Requiroom Start</h1>
-<p>Full proxied browsing — cookies, cache, and a Chromium engine for Cloudflare-protected pages. Sites see this host&apos;s IP.</p>
+<p>Direct browsing — pages load in this frame from their own origin (same as a normal browser iframe).</p>
 <div class="grid">
-<a href="https://example.com">example.com</a>
-<a href="https://wikipedia.org">Wikipedia</a>
-<a href="https://api.ipify.org?format=json">What is my IP?</a>
-<a href="https://httpbin.org/cookies/set?requiroom=1">Set a cookie</a>
+${links}
 </div>
-<div class="note"><strong>Session:</strong> Cookies and HTTP cache are stored locally (IndexedDB / Cache API). Use Clear data in the toolbar to wipe them. Sites see this host&apos;s IP. Private/local URLs are blocked.</div>
+<div class="note"><strong>Note:</strong> Sites that send <code>X-Frame-Options</code> or strict <code>frame-ancestors</code> CSP will refuse to embed here. A same-origin browse proxy is retired for now and may return later.</div>
 </body></html>`;
 }
 
+/** Iframe `src` for a tab URL — direct navigation (no `/api/proxy`). */
 export function frameSrc(url: string): string {
   if (url === BROWSER_HOME || url.startsWith("about:")) {
     return `data:text/html;charset=utf-8,${encodeURIComponent(browserHomeHtml())}`;
   }
-  return `/api/proxy?url=${encodeURIComponent(url)}`;
+  return url;
 }
 
 export function normalizeBrowseUrl(raw: string): string {

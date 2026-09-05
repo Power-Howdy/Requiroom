@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Eraser, Lock, Plus, RotateCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Plus, RotateCw } from "lucide-react";
 import { TabStrip, ToolButton, TextInput, AppToolbar } from "@/components/ui";
 import type { BrowserTab } from "./browserUtils";
 
@@ -18,7 +18,6 @@ export function BrowserChrome({
   onReload,
   onAddressChange,
   onNavigate,
-  onClearData,
 }: {
   tabs: BrowserTab[];
   activeId: string;
@@ -33,7 +32,6 @@ export function BrowserChrome({
   onReload: () => void;
   onAddressChange: (v: string) => void;
   onNavigate: () => void;
-  onClearData: () => void;
 }) {
   return (
     <>
@@ -68,13 +66,6 @@ export function BrowserChrome({
             if (e.key === "Enter") onNavigate();
           }}
         />
-        <ToolButton
-          title="Clear cookies & cache"
-          onClick={onClearData}
-          aria-label="Clear browsing data"
-        >
-          <Eraser size={16} />
-        </ToolButton>
       </AppToolbar>
     </>
   );

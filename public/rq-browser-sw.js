@@ -1,4 +1,5 @@
 /* Requiroom browser service worker — cookie jar + HTTP cache for /api/proxy */
+/* v2: follow proxy redirects in-SW (iframe-safe) */
 /* eslint-disable no-restricted-globals */
 
 const DB_NAME = "requiroom-browser";
@@ -189,31 +190,63 @@ async function handleProxy(req) {
     if (hit) return hit;
   }
 
-  const cookieHeader = await getCookiesForUrl(target);
-  const headers = new Headers(req.headers);
-  if (cookieHeader) headers.set("X-RQ-Cookie", cookieHeader);
-  headers.delete("cookie"); // don't leak unrelated first-party cookies upstream via confusion
+  // Follow same-origin proxy redirects here. Returning fetch(redirect:"manual")
+  // 3xx responses from a SW often breaks iframe navigations (opaque / filtered).
+  let requestUrl = req.url;
+  let method = req.method;
+  let body =
+    method === "GET" || method === "HEAD" ? undefined : await req.arrayBuffer();
+  let upstream = null;
+  let finalUrl = target;
 
-  const upstream = await fetch(
-    new Request(req.url, {
-      method: req.method,
-      headers,
-      body: req.method === "GET" || req.method === "HEAD" ? undefined : await req.arrayBuffer(),
-      redirect: "manual",
-      credentials: "omit",
-    }),
-  );
+  for (let hop = 0; hop < 12; hop++) {
+    const hopTarget = new URL(requestUrl).searchParams.get("url") || finalUrl;
+    const cookieHeader = await getCookiesForUrl(hopTarget);
+    const headers = new Headers(req.headers);
+    if (cookieHeader) headers.set("X-RQ-Cookie", cookieHeader);
+    headers.delete("cookie");
 
-  const finalUrl = upstream.headers.get("X-RQ-Final-URL") || target;
-  const setRaw = upstream.headers.get("X-RQ-Set-Cookie");
-  if (setRaw) {
+    upstream = await fetch(
+      new Request(requestUrl, {
+        method,
+        headers,
+        body,
+        redirect: "manual",
+        credentials: "omit",
+      }),
+    );
+
+    finalUrl = upstream.headers.get("X-RQ-Final-URL") || hopTarget;
+    const setRaw = upstream.headers.get("X-RQ-Set-Cookie");
+    if (setRaw) {
+      try {
+        const list = JSON.parse(setRaw);
+        if (Array.isArray(list)) await applySetCookies(list, finalUrl);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
+    const loc = upstream.headers.get("Location");
+    if (!loc) break;
     try {
-      const list = JSON.parse(setRaw);
-      if (Array.isArray(list)) await applySetCookies(list, finalUrl);
+      const next = new URL(loc, requestUrl);
+      if (next.origin !== self.location.origin || next.pathname !== "/api/proxy") {
+        // Don't follow off-proxy redirects from the SW
+        break;
+      }
+      requestUrl = next.href;
+      if (upstream.status === 303 || ((upstream.status === 301 || upstream.status === 302) && method !== "GET" && method !== "HEAD")) {
+        method = "GET";
+        body = undefined;
+      }
     } catch {
-      /* ignore */
+      break;
     }
   }
+
+  if (!upstream) return fetch(req);
 
   const outHeaders = new Headers(upstream.headers);
   outHeaders.delete("X-RQ-Set-Cookie");

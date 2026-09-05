@@ -1,7 +1,10 @@
 "use client";
 
+import { GithubIcon } from "./GithubIcon";
 import { APP_META, useWindowStore, type AppId } from "@/store/windowStore";
 import { AppIcon } from "./AppIcon";
+import { openGithubInBrowser } from "./openGithub";
+import { siteConfig } from "@/lib/site";
 
 const DESKTOP_ICONS: AppId[] = [
   "browser",
@@ -41,6 +44,24 @@ export function DesktopIcons() {
           </span>
         </button>
       ))}
+
+      <button
+        type="button"
+        className="os-desktop-icon flex flex-col items-center gap-0.5 w-[72px] p-1.5 rounded-lg"
+        title={siteConfig.githubUrl}
+        onDoubleClick={openGithubInBrowser}
+        onClick={openGithubInBrowser}
+      >
+        <span
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: "#24292f55", color: "#e6edf3" }}
+        >
+          <GithubIcon size={20} />
+        </span>
+        <span className="text-[11px] leading-tight text-center text-white drop-shadow-md">
+          GitHub
+        </span>
+      </button>
     </div>
   );
 }

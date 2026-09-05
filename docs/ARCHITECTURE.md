@@ -1,23 +1,24 @@
 # Architecture
 
 Requiroom is an in-browser desktop: a multi-window shell in the client, with a
-small Next.js server surface for browsing and LLM forwarding.
+small Next.js server surface for LLM forwarding (and a retired browse-proxy
+API kept for a possible future return).
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Browser tab                                            │
 │  ┌───────────────────────────────────────────────────┐  │
 │  │ Desktop (src/os) — windows, taskbar, splash       │  │
-│  │ Apps (src/apps) — Browser, Files, Shell, …        │  │
+│  │ Apps (src/apps) — Browser (direct iframe), …      │  │
 │  │ Stores (src/store) + VFS (src/fs) → IndexedDB      │  │
 │  └───────────────────────────────────────────────────┘  │
-│            │ /api/proxy          │ /api/llm             │
-└────────────┼─────────────────────┼──────────────────────┘
-             ▼                     ▼
-      Next.js route           Next.js route
-      HTML rewrite,           Forward to OpenAI /
-      cookies, optional       Anthropic / Gemini /
-      Playwright Chromium     NVIDIA (user’s key)
+│            │ iframe → remote site    │ /api/llm         │
+└────────────┼─────────────────────────┼──────────────────┘
+             ▼                         ▼
+      Third-party origin          Next.js route
+      (X-Frame may block)         Forward to OpenAI /
+                                  Anthropic / Gemini /
+                                  NVIDIA (user’s key)
 ```
 
 ## Client OS
@@ -35,20 +36,11 @@ client-side; there is no multi-user backend.
 `src/fs/virtualFs.ts` models a Unix-like tree. Import/export and zip live in
 `src/fs/transfer.ts`. Files app uses the File System Access API when available.
 
-## Browser / proxy
+## Browser
 
-Visited pages are loaded through **`/api/proxy`** so third parties see the
-**host’s** outbound IP (not a “Direct” tab navigation). Important pieces:
-
-| Module | Role |
-| --- | --- |
-| `safety.ts` | Block private / link-local / metadata SSRF targets |
-| `rewrite.ts` | Rewrite HTML/URLs for same-origin proxying |
-| `cookies.ts` | Session cookie handling |
-| `browserFetch.ts` | Optional Chromium fetch for challenge pages |
-| `public/rq-browser-sw.js` | Service worker: cookie jar + HTTP cache |
-
-See [PROXY.md](PROXY.md) for operator and contributor details.
+The in-app **Browser** loads `https://…` URLs **directly** in a sandboxed
+iframe. Sites that forbid framing stay blank. The old **`/api/proxy`** rewrite
+stack is **retired** (code retained); see [PROXY.md](PROXY.md).
 
 ## LLM / assistant
 

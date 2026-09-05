@@ -16,7 +16,6 @@ import { useThemeStore } from "@/store/themeStore";
 import { useNotifStore } from "@/store/notifStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { importHostFiles } from "@/fs/transfer";
-import { registerBrowserServiceWorker } from "@/browser/registerSw";
 
 const MIN_SPLASH_MS = 1800;
 const SPLASH_FADE_MS = 450;
@@ -35,10 +34,6 @@ export function Desktop() {
   const [splash, setSplash] = useState<SplashPhase>("loading");
 
   useEffect(() => {
-    void registerBrowserServiceWorker();
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     const started = performance.now();
 
@@ -50,7 +45,6 @@ export function Desktop() {
           initNotif(),
           initSettings(),
           initWindows(),
-          registerBrowserServiceWorker(),
         ]);
       } finally {
         if (cancelled) return;

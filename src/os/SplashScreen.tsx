@@ -34,6 +34,8 @@ export function SplashScreen({ phase }: { phase: SplashPhase }) {
       aria-live="polite"
       aria-busy={phase === "loading"}
     >
+      <div className="os-splash-bg" aria-hidden />
+      <div className="os-splash-scrim" aria-hidden />
       <div className="os-splash-glow" aria-hidden />
 
       <div className="relative z-10 flex w-full max-w-md flex-col items-center text-center">

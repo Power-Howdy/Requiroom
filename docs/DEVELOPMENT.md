@@ -4,7 +4,7 @@
 
 - Node.js **20+**
 - npm (comes with Node)
-- A modern desktop browser (Chromium-based recommended for proxy + File System Access)
+- A modern desktop browser (Chromium-based recommended for File System Access)
 
 ## First run
 
@@ -16,16 +16,11 @@ npm run dev
 Visit http://localhost:3000. The splash screen waits for FS / theme / settings
 init before showing the desktop.
 
-### Optional Chromium for the proxy
+### Optional Chromium (retired proxy experiments)
 
-Some sites present bot challenges. The proxy can fall back to Playwright
-Chromium when a challenge is detected:
-
-```bash
-npm run browser:install
-```
-
-Without Chromium installed, those sites may still fail in the in-app Browser.
+`npm run browser:install` installs Playwright Chromium for the **retired**
+`/api/proxy` challenge path. The Browser UI no longer uses it; see
+[PROXY.md](PROXY.md).
 
 ## Environment
 
@@ -52,7 +47,8 @@ npm run build
 | Desktop chrome | `src/os/` |
 | Theme / wallpaper | `src/theme/`, Settings Appearance |
 | Shell commands | `src/apps/shell/commands.ts` |
-| Proxy behavior | `src/app/api/proxy/`, `docs/PROXY.md` |
+| In-app Browser | `src/apps/browser/` (direct iframe) |
+| Retired browse proxy | `src/app/api/proxy/`, `docs/PROXY.md` |
 | LLM providers | `src/app/api/llm/route.ts`, Settings AI panel |
 | Shared UI | `src/components/ui/` |
 | OS dialogs | `dialogStore` + `OsDialogs` — never `window.prompt` |

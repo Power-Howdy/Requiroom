@@ -13,7 +13,7 @@ export const SPLASH_TIPS = [
   },
   {
     title: "Make it yours",
-    body: "Settings → Appearance lets you pick wallpapers, fonts, colors, and depth styles.",
+    body: "Settings → Appearance: try Room of Need and other Requiroom scene wallpapers, or classic gradients.",
   },
   {
     title: "Shell is simulated",
@@ -24,8 +24,8 @@ export const SPLASH_TIPS = [
     body: "Files, theme, and API keys stay in this browser via IndexedDB — nothing is uploaded by default.",
   },
   {
-    title: "Proxy browsing",
-    body: "The Browser app fetches sites through /api/proxy with a full cookie jar and HTTP cache — destinations see this host’s IP.",
+    title: "In-app Browser",
+    body: "The Browser loads sites directly in a frame. Pages that forbid embedding (X-Frame-Options / CSP) will stay blank — open them in a normal tab instead.",
   },
   {
     title: "Pick your model",

@@ -1,7 +1,10 @@
 "use client";
 
+import { GithubIcon } from "./GithubIcon";
 import { AppIcon } from "./AppIcon";
 import { APP_META, useWindowStore, type AppId } from "@/store/windowStore";
+import { openGithubInBrowser } from "./openGithub";
+import { siteConfig } from "@/lib/site";
 
 const APPS: AppId[] = [
   "browser",
@@ -46,6 +49,29 @@ export function StartMenu() {
               <span className="text-sm font-medium">{APP_META[id].title}</span>
             </button>
           ))}
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <button
+            type="button"
+            className="os-start-item flex w-full items-center gap-3 px-3 py-2.5 text-left"
+            onClick={() => {
+              openGithubInBrowser();
+              setStartOpen(false);
+            }}
+            title={siteConfig.githubUrl}
+          >
+            <span
+              className="w-9 h-9 rounded-lg flex items-center justify-center"
+              style={{ background: "#24292f55", color: "#e6edf3" }}
+            >
+              <GithubIcon size={18} />
+            </span>
+            <span className="flex flex-col min-w-0">
+              <span className="text-sm font-medium">GitHub</span>
+              <span className="text-[11px] opacity-60 truncate">Open source · Star the repo</span>
+            </span>
+          </button>
         </div>
       </div>
     </>

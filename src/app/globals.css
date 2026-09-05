@@ -47,10 +47,8 @@ body {
 }
 
 .os-splash {
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--os-primary-rgb), 0.22), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(var(--os-secondary-rgb), 0.14), transparent 50%),
-    linear-gradient(165deg, #020617 0%, #0f172a 50%, #020617 100%);
+  background: #020617;
+  overflow: hidden;
   opacity: 1;
   transition: opacity 0.45s ease, visibility 0.45s ease;
 }
@@ -61,18 +59,56 @@ body {
   pointer-events: none;
 }
 
+.os-splash-bg {
+  position: absolute;
+  inset: -2%;
+  background:
+    url("/wallpapers/requirement.jpg") center / cover no-repeat;
+  transform: scale(1.06);
+  animation: os-splash-kenburns 12s ease-out both;
+  pointer-events: none;
+}
+
+/* Follow the chosen desktop wallpaper when theme has applied */
+html[data-wallpaper="come"] .os-splash-bg {
+  background-image: url("/wallpapers/come.jpg");
+}
+html[data-wallpaper="enchanted-library"] .os-splash-bg {
+  background-image: url("/wallpapers/enchanted-library.jpg");
+}
+html[data-wallpaper="lake-towers"] .os-splash-bg {
+  background-image: url("/wallpapers/lake-towers.jpg");
+}
+html[data-wallpaper="vanishing"] .os-splash-bg {
+  background-image: url("/wallpapers/vanishing.jpg");
+}
+html[data-wallpaper="requirement"] .os-splash-bg {
+  background-image: url("/wallpapers/requirement.jpg");
+}
+
+.os-splash-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 35%, rgba(2, 6, 23, 0.35), rgba(2, 6, 23, 0.72) 70%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.45) 0%, rgba(2, 6, 23, 0.78) 100%);
+  pointer-events: none;
+}
+
 .os-splash-glow {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.12) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.1) 1px, transparent 0);
   background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
   pointer-events: none;
+  opacity: 0.55;
 }
 
 .os-splash-brand {
   animation: os-splash-rise 0.7s ease-out both;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
 }
 
 .os-splash-bar {
@@ -108,6 +144,17 @@ body {
   }
 }
 
+@keyframes os-splash-kenburns {
+  from {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
 @keyframes os-splash-indeterminate {
   0% {
     transform: translateX(-120%);
@@ -119,8 +166,13 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .os-splash-brand,
-  .os-splash-bar-fill {
+  .os-splash-bar-fill,
+  .os-splash-bg {
     animation: none;
+  }
+  .os-splash-bg {
+    transform: scale(1.04);
+    opacity: 1;
   }
   .os-splash-bar-fill {
     width: 100%;
@@ -134,6 +186,9 @@ body {
     radial-gradient(ellipse 80% 60% at 20% 20%, rgba(var(--os-primary-rgb), 0.35), transparent 55%),
     radial-gradient(ellipse 70% 50% at 80% 10%, rgba(var(--os-secondary-rgb), 0.28), transparent 50%),
     linear-gradient(160deg, #020617 0%, #0f172a 45%, #1e1b4b 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 html[data-wallpaper="aurora"] .os-wallpaper {
@@ -191,6 +246,37 @@ html[data-wallpaper="noir"] .os-wallpaper {
   background:
     radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 55%),
     linear-gradient(180deg, #09090b 0%, #18181b 55%, #27272a 100%);
+}
+
+/* Requiroom / Room-of-Requirement inspired scene wallpapers */
+html[data-wallpaper="requirement"] .os-wallpaper {
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.25) 0%, rgba(2, 6, 23, 0.45) 100%),
+    url("/wallpapers/requirement.jpg") center / cover no-repeat;
+}
+
+html[data-wallpaper="come"] .os-wallpaper {
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.2) 0%, rgba(2, 6, 23, 0.4) 100%),
+    url("/wallpapers/come.jpg") center / cover no-repeat;
+}
+
+html[data-wallpaper="enchanted-library"] .os-wallpaper {
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.22) 0%, rgba(2, 6, 23, 0.42) 100%),
+    url("/wallpapers/enchanted-library.jpg") center / cover no-repeat;
+}
+
+html[data-wallpaper="lake-towers"] .os-wallpaper {
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.15) 0%, rgba(2, 6, 23, 0.35) 100%),
+    url("/wallpapers/lake-towers.jpg") center / cover no-repeat;
+}
+
+html[data-wallpaper="vanishing"] .os-wallpaper {
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.2) 0%, rgba(2, 6, 23, 0.4) 100%),
+    url("/wallpapers/vanishing.jpg") center / cover no-repeat;
 }
 
 .os-window {

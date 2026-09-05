@@ -8,9 +8,10 @@ export function registerBrowserServiceWorker(): Promise<ServiceWorkerRegistratio
   }
   if (!registering) {
     registering = navigator.serviceWorker
-      .register("/rq-browser-sw.js", { scope: "/" })
-      .then((reg) => {
-        void navigator.serviceWorker.ready;
+      .register("/rq-browser-sw.js", { scope: "/", updateViaCache: "none" })
+      .then(async (reg) => {
+        await reg.update().catch(() => {});
+        await navigator.serviceWorker.ready;
         return reg;
       })
       .catch((err) => {

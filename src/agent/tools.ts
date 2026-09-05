@@ -181,7 +181,7 @@ export const TOOL_DEFINITIONS = [
     type: "function",
     function: {
       name: "browser_read",
-      description: "Read text content from the active browser iframe (same-origin proxy)",
+      description: "Read text content from the active browser iframe when same-origin (home page); cross-origin pages cannot be read",
       parameters: { type: "object", properties: {} },
     },
   },

@@ -25,11 +25,11 @@ Use this when making the repository public on GitHub (or another host).
 
 - Pin a short README blurb and link [CONTRIBUTING.md](../CONTRIBUTING.md).
 - Triage issues with the provided templates.
-- Prefer discussing large proxy/LLM changes in an issue before a big PR.
+- Prefer discussing large LLM (or revived proxy) changes in an issue before a big PR.
 
 ## Optional extras later
 
 - `NOTICE` or third-party attribution file if you redistribute bundled assets
 - GitHub Discussions for Q&A
 - Dependabot / Renovate for dependency updates
-- A public demo with auth or rate limits on `/api/proxy` and `/api/llm`
+- A public demo with auth or rate limits on `/api/llm`
