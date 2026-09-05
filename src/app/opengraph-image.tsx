@@ -87,8 +87,8 @@ export default function OpenGraphImage() {
             color: "#94a3b8",
           }}
         >
-          <span>Proxy browse · VFS · Terminal · Assistant</span>
-          <span style={{ color: "#5eead4", fontWeight: 600 }}>requiroom</span>
+          <span>Browser · Files · Terminal · Assistant</span>
+          <span style={{ color: "#5eead4", fontWeight: 600 }}>requiroom.vercel.app</span>
         </div>
       </div>
     ),

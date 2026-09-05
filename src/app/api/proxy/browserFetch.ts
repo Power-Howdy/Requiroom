@@ -12,7 +12,6 @@ export type BrowserFetchResult = {
 };
 
 let browserPromise: Promise<Browser> | null = null;
-let browserBusy = false;
 let availabilityCache: { ok: boolean; at: number } | null = null;
 
 /** Serialize Chromium jobs instead of skipping when busy. */
@@ -270,12 +269,7 @@ export function fetchDocumentWithBrowser(
   cookieHeader: string | null,
 ): Promise<BrowserFetchResult> {
   const job = chain.then(async () => {
-    browserBusy = true;
-    try {
-      return await fetchDocumentWithBrowserInner(targetUrl, cookieHeader);
-    } finally {
-      browserBusy = false;
-    }
+    return await fetchDocumentWithBrowserInner(targetUrl, cookieHeader);
   });
   chain = job.then(
     () => undefined,

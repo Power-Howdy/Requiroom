@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Lock, Plus, RotateCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Lock, Plus, RotateCw } from "lucide-react";
 import { TabStrip, ToolButton, TextInput, AppToolbar } from "@/components/ui";
 import type { BrowserTab } from "./browserUtils";
 
@@ -10,12 +10,14 @@ export function BrowserChrome({
   address,
   canBack,
   canForward,
+  canOpenExternal,
   onSelectTab,
   onCloseTab,
   onNewTab,
   onBack,
   onForward,
   onReload,
+  onOpenExternal,
   onAddressChange,
   onNavigate,
 }: {
@@ -24,12 +26,14 @@ export function BrowserChrome({
   address: string;
   canBack: boolean;
   canForward: boolean;
+  canOpenExternal: boolean;
   onSelectTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
   onBack: () => void;
   onForward: () => void;
   onReload: () => void;
+  onOpenExternal: () => void;
   onAddressChange: (v: string) => void;
   onNavigate: () => void;
 }) {
@@ -66,6 +70,14 @@ export function BrowserChrome({
             if (e.key === "Enter") onNavigate();
           }}
         />
+        <ToolButton
+          onClick={onOpenExternal}
+          disabled={!canOpenExternal}
+          title="Open in system browser"
+          aria-label="Open in system browser"
+        >
+          <ExternalLink size={16} />
+        </ToolButton>
       </AppToolbar>
     </>
   );

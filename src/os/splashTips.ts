@@ -25,7 +25,7 @@ export const SPLASH_TIPS = [
   },
   {
     title: "In-app Browser",
-    body: "The Browser loads sites directly in a frame. Pages that forbid embedding (X-Frame-Options / CSP) will stay blank — open them in a normal tab instead.",
+    body: "Pages load in a frame. Sites that forbid embedding (GitHub, Google, …) show an “Open in system browser” option instead of a blank page.",
   },
   {
     title: "Pick your model",

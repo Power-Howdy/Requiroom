@@ -42,6 +42,7 @@ export function NotesApp({ windowId, initialPath }: { windowId: string; initialP
 
   const notes = useMemo(() => {
     try {
+      void tree["/home/user/Notes"];
       return ls("/home/user/Notes").filter((n) => n.type === "file" && n.name.endsWith(".md"));
     } catch {
       return [];

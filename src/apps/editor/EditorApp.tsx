@@ -26,32 +26,37 @@ interface EditorTab {
   value: string;
 }
 
+function tabFromPath(path: string, readText: (p: string) => string): EditorTab {
+  let value = "";
+  try {
+    value = readText(path);
+  } catch {
+    value = "";
+  }
+  return { path, dirty: false, value };
+}
+
 export function EditorApp({ windowId, initialPath }: { windowId: string; initialPath?: string }) {
   const readText = useFsStore((s) => s.readText);
   const writeText = useFsStore((s) => s.writeText);
   const updateTitle = useWindowStore((s) => s.updateTitle);
-  const [tabs, setTabs] = useState<EditorTab[]>([]);
-  const [active, setActive] = useState<string | null>(null);
+  const [tabs, setTabs] = useState<EditorTab[]>(() =>
+    initialPath ? [tabFromPath(initialPath, useFsStore.getState().readText)] : [],
+  );
+  const [active, setActive] = useState<string | null>(() => initialPath ?? null);
+
+  useEffect(() => {
+    if (active) updateTitle(windowId, `Editor — ${basename(active)}`);
+    else updateTitle(windowId, "Editor");
+  }, [active, windowId, updateTitle]);
 
   const openFile = (path: string) => {
     setTabs((prev) => {
       if (prev.some((t) => t.path === path)) return prev;
-      let value = "";
-      try {
-        value = readText(path);
-      } catch {
-        value = "";
-      }
-      return [...prev, { path, dirty: false, value }];
+      return [...prev, tabFromPath(path, readText)];
     });
     setActive(path);
-    updateTitle(windowId, `Editor — ${basename(path)}`);
   };
-
-  useEffect(() => {
-    if (initialPath) openFile(initialPath);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPath]);
 
   const current = tabs.find((t) => t.path === active);
 

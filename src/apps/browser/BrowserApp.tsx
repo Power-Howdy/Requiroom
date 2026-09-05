@@ -5,13 +5,22 @@ import { useWindowStore } from "@/store/windowStore";
 import { useNotifStore } from "@/store/notifStore";
 import { AppShell } from "@/components/ui";
 import { BrowserChrome } from "./BrowserChrome";
+import { FrameBlockedView } from "./FrameBlockedView";
+import { SearchView } from "./SearchView";
 import {
   BROWSER_HOME,
   createHomeTab,
+  displayAddressForUrl,
+  extractSearchQuery,
   frameSrc,
+  isSearchResultsUrl,
+  likelyBlocksFraming,
   normalizeBrowseUrl,
+  openInSystemBrowser,
+  searchUrlForQuery,
   tabTitleFromUrl,
   type BrowserTab,
+  type SearchEngine,
 } from "./browserUtils";
 
 function pushUrl(tab: BrowserTab, url: string): BrowserTab {
@@ -30,47 +39,101 @@ export function BrowserApp({ windowId }: { windowId: string }) {
   const notify = useNotifStore((s) => s.notify);
   const [tabs, setTabs] = useState<BrowserTab[]>([createHomeTab()]);
   const [activeId, setActiveId] = useState(() => tabs[0].id);
-  const [address, setAddress] = useState("");
+  /** While typing in the omnibox; `null` means show the active tab URL. */
+  const [addressDraft, setAddressDraft] = useState<string | null>(null);
   const [frameNonce, setFrameNonce] = useState(0);
 
   const active = tabs.find((t) => t.id === activeId) || tabs[0];
+  const address =
+    addressDraft !== null ? addressDraft : displayAddressForUrl(active.url);
+  const searchQuery = extractSearchQuery(active.url);
+  const isSearch = isSearchResultsUrl(active.url);
+  const frameBlocked =
+    !isSearch &&
+    active.url !== BROWSER_HOME &&
+    !active.url.startsWith("about:") &&
+    likelyBlocksFraming(active.url);
 
   useEffect(() => {
-    setAddress(active?.url === BROWSER_HOME ? "" : active?.url || "");
     updateTitle(windowId, `Browser — ${active?.title || "New Tab"}`);
   }, [active, windowId, updateTitle]);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ windowId: string; url: string }>).detail;
-      if (!detail || detail.windowId !== windowId) return;
-      const url = normalizeBrowseUrl(detail.url);
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeId ? pushUrl(t, url) : t)),
-      );
-      setFrameNonce((n) => n + 1);
-    };
-    window.addEventListener("requiroom:navigate", handler);
-    return () => window.removeEventListener("requiroom:navigate", handler);
-  }, [windowId, activeId]);
 
   const navigate = (raw: string) => {
     const url = normalizeBrowseUrl(raw);
     setTabs((prev) => prev.map((t) => (t.id === activeId ? pushUrl(t, url) : t)));
+    setAddressDraft(null);
+    setFrameNonce((n) => n + 1);
+    // Sites/search engines that refuse iframes — open in the system browser from this gesture.
+    if (isSearchResultsUrl(url) || likelyBlocksFraming(url)) {
+      openInSystemBrowser(url);
+    }
+  };
+
+  const openSearchExternal = (engine: SearchEngine) => {
+    const q = searchQuery || address.trim();
+    if (!q) return;
+    const url = searchUrlForQuery(q, engine);
+    setTabs((prev) => prev.map((t) => (t.id === activeId ? pushUrl(t, url) : t)));
+    setAddressDraft(null);
+    openInSystemBrowser(url);
+  };
+
+  useEffect(() => {
+    const onNavigateEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ windowId: string; url: string }>).detail;
+      if (!detail || detail.windowId !== windowId) return;
+      navigate(detail.url);
+    };
+    const onFrameMessage = (e: MessageEvent) => {
+      const data = e.data;
+      if (!data || data.type !== "requiroom:navigate" || typeof data.url !== "string") return;
+      navigate(data.url);
+    };
+    window.addEventListener("requiroom:navigate", onNavigateEvent);
+    window.addEventListener("message", onFrameMessage);
+    return () => {
+      window.removeEventListener("requiroom:navigate", onNavigateEvent);
+      window.removeEventListener("message", onFrameMessage);
+    };
+    // navigate closes over activeId — rebind when the active tab changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowId, activeId]);
+
+  const stepHistory = (delta: number) => {
+    const tab = tabs.find((t) => t.id === activeId);
+    if (!tab) return;
+    const histIdx = tab.histIdx + delta;
+    if (histIdx < 0 || histIdx >= tab.history.length) return;
+    const url = tab.history[histIdx];
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.id === activeId ? { ...t, histIdx, url, title: tabTitleFromUrl(url) } : t,
+      ),
+    );
+    setAddressDraft(null);
     setFrameNonce((n) => n + 1);
   };
 
-  const stepHistory = (delta: number) => {
-    setTabs((prev) =>
-      prev.map((t) => {
-        if (t.id !== activeId) return t;
-        const histIdx = t.histIdx + delta;
-        if (histIdx < 0 || histIdx >= t.history.length) return t;
-        const url = t.history[histIdx];
-        return { ...t, histIdx, url, title: tabTitleFromUrl(url) };
-      }),
-    );
-    setFrameNonce((n) => n + 1);
+  const syncAddressFromFrame = (iframe: HTMLIFrameElement) => {
+    try {
+      const href = iframe.contentWindow?.location.href;
+      if (!href || href === "about:blank") return;
+      if (href.startsWith("data:")) return;
+      const url = normalizeBrowseUrl(href);
+      if (url === active.url) return;
+      setTabs((prev) =>
+        prev.map((t) => (t.id === activeId ? pushUrl(t, url) : t)),
+      );
+      setAddressDraft(null);
+    } catch {
+      /* cross-origin — keep the URL we navigated to */
+    }
+  };
+
+  const openExternal = () => {
+    const url = active.url === BROWSER_HOME ? address : active.url;
+    if (!url || url === BROWSER_HOME) return;
+    openInSystemBrowser(normalizeBrowseUrl(url));
   };
 
   return (
@@ -81,16 +144,24 @@ export function BrowserApp({ windowId }: { windowId: string }) {
         address={address}
         canBack={active.histIdx > 0}
         canForward={active.histIdx < active.history.length - 1}
-        onSelectTab={setActiveId}
+        canOpenExternal={!!address && active.url !== BROWSER_HOME}
+        onSelectTab={(id) => {
+          setActiveId(id);
+          setAddressDraft(null);
+        }}
         onCloseTab={(id) => {
           const next = tabs.filter((x) => x.id !== id);
           setTabs(next);
-          if (activeId === id) setActiveId(next[0].id);
+          if (activeId === id) {
+            setActiveId(next[0].id);
+            setAddressDraft(null);
+          }
         }}
         onNewTab={() => {
           const tab = createHomeTab();
           setTabs((t) => [...t, tab]);
           setActiveId(tab.id);
+          setAddressDraft(null);
         }}
         onBack={() => stepHistory(-1)}
         onForward={() => stepHistory(1)}
@@ -98,26 +169,42 @@ export function BrowserApp({ windowId }: { windowId: string }) {
           setFrameNonce((n) => n + 1);
           if (active.url !== BROWSER_HOME) navigate(active.url);
         }}
-        onAddressChange={setAddress}
+        onOpenExternal={openExternal}
+        onAddressChange={setAddressDraft}
         onNavigate={() => navigate(address || BROWSER_HOME)}
       />
-      <iframe
-        key={`${active.url}-${active.id}-${frameNonce}`}
-        title={active.title}
-        src={frameSrc(active.url)}
-        className="flex-1 w-full bg-white border-0"
-        sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-        referrerPolicy="no-referrer-when-downgrade"
-        onError={() =>
-          notify({
-            title: "Browser error",
-            body: `Failed to load ${active.url}`,
-            level: "error",
-            appId: "browser",
-            windowId,
-          })
-        }
-      />
+      {isSearch ? (
+        <SearchView
+          query={searchQuery || ""}
+          onSearchExternal={openSearchExternal}
+          onGoHome={() => navigate(BROWSER_HOME)}
+        />
+      ) : frameBlocked ? (
+        <FrameBlockedView
+          url={active.url}
+          onOpenExternal={openExternal}
+          onGoHome={() => navigate(BROWSER_HOME)}
+        />
+      ) : (
+        <iframe
+          key={`${active.url}-${active.id}-${frameNonce}`}
+          title={active.title}
+          src={frameSrc(active.url)}
+          className="flex-1 w-full bg-white border-0"
+          sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
+          referrerPolicy="no-referrer-when-downgrade"
+          onLoad={(e) => syncAddressFromFrame(e.currentTarget)}
+          onError={() =>
+            notify({
+              title: "Browser error",
+              body: `Failed to load ${active.url}`,
+              level: "error",
+              appId: "browser",
+              windowId,
+            })
+          }
+        />
+      )}
     </AppShell>
   );
 }

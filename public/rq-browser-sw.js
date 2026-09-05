@@ -1,6 +1,5 @@
 /* Requiroom browser service worker — cookie jar + HTTP cache for /api/proxy */
 /* v2: follow proxy redirects in-SW (iframe-safe) */
-/* eslint-disable no-restricted-globals */
 
 const DB_NAME = "requiroom-browser";
 const DB_VERSION = 1;

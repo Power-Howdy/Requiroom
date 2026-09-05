@@ -27,17 +27,27 @@ init before showing the desktop.
 No API keys are required in `.env` for core desktop features. LLM providers are
 configured in **Settings → AI** (keys stay in the browser).
 
-If you add server env vars later, use `.env.local` (gitignored) and document
+For correct Open Graph / social preview URLs in production, set:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://requiroom.vercel.app
+```
+
+(On Vercel, `VERCEL_PROJECT_PRODUCTION_URL` is also used as a fallback.)
+
+If you add other server env vars, use `.env.local` (gitignored) and document
 them here.
 
 ## Quality checks
 
-Before opening a PR:
+Before opening a PR (and automatically on `git push` via Husky):
 
 ```bash
 npm run lint
 npm run build
 ```
+
+`npm install` sets `core.hooksPath` to `.husky/_` so `pre-push` runs `npm run lint`.
 
 ## Where to change what
 

@@ -22,13 +22,16 @@ Requirements: **Node.js 20+** (LTS recommended) and npm.
 ```bash
 git clone <your-fork-or-this-repo>.git
 cd BrowserOS   # or your local folder name
-npm install
+npm install    # also installs a git pre-push hook (Husky) that runs lint
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Optional — Chromium for Cloudflare / challenge pages via the proxy:
+A **pre-push** hook runs `npm run lint` and blocks the push if ESLint fails.
+CI also runs lint + build on PRs to `main`.
+
+Optional — Chromium for retired proxy experiments:
 
 ```bash
 npm run browser:install
@@ -41,7 +44,7 @@ Useful scripts:
 | `npm run dev` | Next.js dev server |
 | `npm run build` | Production build |
 | `npm run start` | Serve production build |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint (also runs on `git push` via Husky) |
 | `npm run browser:install` | Install Playwright Chromium |
 
 ## Project layout (short)

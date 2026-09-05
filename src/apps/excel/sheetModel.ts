@@ -27,7 +27,6 @@ export function evalFormula(
     return String(cell.v ?? 0);
   });
   try {
-    // eslint-disable-next-line no-new-func
     const n = Function(`"use strict"; return (${replaced})`)();
     return typeof n === "number" && Number.isFinite(n) ? n : String(n);
   } catch {

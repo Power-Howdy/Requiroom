@@ -69,6 +69,7 @@ export function FilesApp({ windowId, initialPath }: { windowId: string; initialP
 
   const entries = useMemo(() => {
     try {
+      void tree[cwd];
       return ls(cwd);
     } catch {
       return [];
@@ -115,11 +116,9 @@ export function FilesApp({ windowId, initialPath }: { windowId: string; initialP
   const uniqueChildName = (base: string) => {
     const existing = new Set(entries.map((e) => e.name));
     if (!existing.has(base)) return base;
-    for (let i = 2; i < 1000; i++) {
-      const candidate = `${base} ${i}`;
-      if (!existing.has(candidate)) return candidate;
-    }
-    return `${base}-${Date.now()}`;
+    let i = 2;
+    while (existing.has(`${base} ${i}`)) i += 1;
+    return `${base} ${i}`;
   };
 
   const renamePath = (oldPath: string) => {

@@ -32,13 +32,29 @@ function nextCell(active: string, move: "down" | "right" | "none"): string {
   return `${COLS[Math.min(COLS.length - 1, ci + 1)]}${cr.r}`;
 }
 
+function draftFromCell(sheet: Workbook["sheets"][number], key: string): string {
+  const cell = sheet.cells[key];
+  return cell?.f ?? (cell?.v !== undefined ? String(cell.v) : "");
+}
+
+function bookFromPath(p: string, readText: (path: string) => string): Workbook {
+  try {
+    if (p.endsWith(".csv")) return parseCsvToBook(basename(p), readText(p));
+    return JSON.parse(readText(p)) as Workbook;
+  } catch {
+    return emptyBook();
+  }
+}
+
 export function ExcelApp({ windowId, initialPath }: { windowId: string; initialPath?: string }) {
   const readText = useFsStore((s) => s.readText);
   const writeText = useFsStore((s) => s.writeText);
   const tree = useFsStore((s) => s.tree);
   const updateTitle = useWindowStore((s) => s.updateTitle);
   const [path, setPath] = useState(initialPath || "");
-  const [book, setBook] = useState<Workbook>(emptyBook());
+  const [book, setBook] = useState<Workbook>(() =>
+    initialPath ? bookFromPath(initialPath, useFsStore.getState().readText) : emptyBook(),
+  );
   const [sheetIdx, setSheetIdx] = useState(0);
   const [active, setActive] = useState("A1");
   const [draft, setDraft] = useState("");
@@ -46,34 +62,23 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
   const [saveAsOpen, setSaveAsOpen] = useState(false);
 
   const sheet = book.sheets[sheetIdx] || book.sheets[0];
+  const idleDraft = draftFromCell(sheet, active);
+  const formulaValue = editing ? draft : idleDraft;
+
+  useEffect(() => {
+    updateTitle(windowId, path ? `Sheets — ${basename(path)}` : "Sheets");
+  }, [path, windowId, updateTitle]);
 
   const load = useCallback(
     (p: string) => {
-      try {
-        if (p.endsWith(".csv")) {
-          setBook(parseCsvToBook(basename(p), readText(p)));
-        } else {
-          setBook(JSON.parse(readText(p)) as Workbook);
-        }
-        setPath(p);
-        setEditing(false);
-        updateTitle(windowId, `Sheets — ${basename(p)}`);
-      } catch {
-        setBook(emptyBook());
-      }
+      setBook(bookFromPath(p, readText));
+      setPath(p);
+      setEditing(false);
+      setActive("A1");
+      setDraft("");
     },
-    [readText, updateTitle, windowId],
+    [readText],
   );
-
-  useEffect(() => {
-    if (initialPath) load(initialPath);
-  }, [initialPath, load]);
-
-  useEffect(() => {
-    if (editing) return;
-    const cell = sheet.cells[active];
-    setDraft(cell?.f ?? (cell?.v !== undefined ? String(cell.v) : ""));
-  }, [active, sheet, editing]);
 
   const writeDraftToBook = (value: string) => {
     const cells = { ...sheet.cells };
@@ -92,17 +97,12 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
   };
 
   const startEdit = (seed?: string) => {
-    if (seed !== undefined) setDraft(seed);
-    else {
-      const cell = sheet.cells[active];
-      setDraft(cell?.f ?? (cell?.v !== undefined ? String(cell.v) : ""));
-    }
+    setDraft(seed !== undefined ? seed : idleDraft);
     setEditing(true);
   };
 
   const cancelEdit = () => {
-    const cell = sheet.cells[active];
-    setDraft(cell?.f ?? (cell?.v !== undefined ? String(cell.v) : ""));
+    setDraft(idleDraft);
     setEditing(false);
   };
 
@@ -128,6 +128,7 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
 
   const sheetsList = useMemo(() => {
     try {
+      void tree["/home/user/Sheets"];
       return useFsStore
         .getState()
         .ls("/home/user/Sheets")
@@ -135,7 +136,7 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
     } catch {
       return [];
     }
-  }, [book, path, tree]);
+  }, [tree]);
 
   return (
     <AppShell>
@@ -161,12 +162,17 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
         <span className="text-xs opacity-50 min-w-[2rem]">{active}</span>
         <TextInput
           className="flex-1 text-sm px-2 py-1 font-mono"
-          value={draft}
+          value={formulaValue}
           onChange={(e) => {
             setDraft(e.target.value);
             if (!editing) setEditing(true);
           }}
-          onFocus={() => setEditing(true)}
+          onFocus={() => {
+            if (!editing) {
+              setDraft(idleDraft);
+              setEditing(true);
+            }
+          }}
           onBlur={() => {
             if (editing) commit("none");
           }}
@@ -186,12 +192,13 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
         <SheetGrid
           sheet={sheet}
           active={active}
-          draft={draft}
+          draft={formulaValue}
           editing={editing}
           onSelect={(key) => {
             if (editing && key !== active) commit("none");
             setActive(key);
             setEditing(false);
+            setDraft("");
           }}
           onDraftChange={setDraft}
           onStartEdit={startEdit}
@@ -200,6 +207,7 @@ export function ExcelApp({ windowId, initialPath }: { windowId: string; initialP
           onNavigate={(key) => {
             setActive(key);
             setEditing(false);
+            setDraft("");
           }}
         />
       </AppBody>
