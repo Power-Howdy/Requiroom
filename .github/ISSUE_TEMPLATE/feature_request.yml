@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an improvement for Requiroom
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What gap does this fill?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work from a user’s perspective?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about (optional).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Desktop / window manager
+        - Browser / proxy
+        - Files / VFS
+        - Terminal
+        - Editor
+        - Notes
+        - Sheets
+        - Settings / theme
+        - Assistant / LLM
+        - Docs / DX
+        - Other
+    validations:
+      required: true

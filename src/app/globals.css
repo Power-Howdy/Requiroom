@@ -1,0 +1,475 @@
+@import "tailwindcss";
+@import "@xterm/xterm/css/xterm.css";
+
+:root {
+  --os-font: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --os-font-size: 1rem;
+  --os-primary: #3b82f6;
+  --os-secondary: #8b5cf6;
+  --os-primary-rgb: 59, 130, 246;
+  --os-secondary-rgb: 139, 92, 246;
+  --os-radius: 12px;
+  --os-title-h: 32px;
+  --os-taskbar-h: 44px;
+  --os-pad: 14px;
+  --os-surface-alpha: 0.92;
+  --os-fg: #e2e8f0;
+  --os-surface: rgba(15, 23, 42, var(--os-surface-alpha));
+  --os-panel: rgba(30, 41, 59, 0.95);
+  --background: #020617;
+  --foreground: #e2e8f0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--os-font);
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--os-font);
+  font-size: var(--os-font-size);
+  background: #020617;
+  color: var(--os-fg);
+}
+
+.os-desktop {
+  color: var(--os-fg);
+  width: 100%;
+  height: 100%;
+  /* Prefer dynamic viewport so mobile/embedded browsers don’t leave a gap under the taskbar */
+  height: 100dvh;
+}
+
+.os-splash {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--os-primary-rgb), 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(var(--os-secondary-rgb), 0.14), transparent 50%),
+    linear-gradient(165deg, #020617 0%, #0f172a 50%, #020617 100%);
+  opacity: 1;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.os-splash--out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.os-splash-glow {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.12) 1px, transparent 0);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+  pointer-events: none;
+}
+
+.os-splash-brand {
+  animation: os-splash-rise 0.7s ease-out both;
+}
+
+.os-splash-bar {
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+}
+
+.os-splash-bar-fill {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--os-primary),
+    var(--os-secondary),
+    transparent
+  );
+  animation: os-splash-indeterminate 1.35s ease-in-out infinite;
+}
+
+@keyframes os-splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes os-splash-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-splash-brand,
+  .os-splash-bar-fill {
+    animation: none;
+  }
+  .os-splash-bar-fill {
+    width: 100%;
+    transform: none;
+    opacity: 0.7;
+  }
+}
+
+.os-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(var(--os-primary-rgb), 0.35), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(var(--os-secondary-rgb), 0.28), transparent 50%),
+    linear-gradient(160deg, #020617 0%, #0f172a 45%, #1e1b4b 100%);
+}
+
+html[data-wallpaper="aurora"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(var(--os-primary-rgb), 0.4), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(var(--os-secondary-rgb), 0.32), transparent 50%),
+    linear-gradient(160deg, #020617 0%, #0f172a 45%, #1e1b4b 100%);
+}
+
+html[data-wallpaper="midnight"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 90% 70% at 70% 20%, rgba(14, 165, 233, 0.25), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 10% 80%, rgba(var(--os-primary-rgb), 0.2), transparent 50%),
+    linear-gradient(145deg, #020617 0%, #0c4a6e 48%, #1e3a5f 100%);
+}
+
+html[data-wallpaper="ember"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 70% 55% at 30% 30%, rgba(249, 115, 22, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(220, 38, 38, 0.25), transparent 50%),
+    linear-gradient(160deg, #1c1917 0%, #7c2d12 42%, #431407 100%);
+}
+
+html[data-wallpaper="forest"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 75% 60% at 25% 25%, rgba(34, 197, 94, 0.28), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 80% 70%, rgba(20, 184, 166, 0.22), transparent 50%),
+    linear-gradient(155deg, #052e16 0%, #14532d 52%, #022c22 100%);
+}
+
+html[data-wallpaper="ocean"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 55% at 15% 40%, rgba(6, 182, 212, 0.3), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 90% 15%, rgba(59, 130, 246, 0.25), transparent 50%),
+    linear-gradient(165deg, #082f49 0%, #0e7490 46%, #164e63 100%);
+}
+
+html[data-wallpaper="dusk"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 80%, rgba(244, 63, 94, 0.3), transparent 50%),
+    radial-gradient(ellipse 65% 55% at 85% 20%, rgba(168, 85, 247, 0.28), transparent 50%),
+    linear-gradient(150deg, #2e1065 0%, #9d174d 52%, #431407 100%);
+}
+
+html[data-wallpaper="mesh"] .os-wallpaper {
+  background:
+    radial-gradient(at 0% 0%, rgba(29, 78, 216, 0.55) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.5) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(219, 39, 119, 0.45) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(var(--os-primary-rgb), 0.35) 0, transparent 50%),
+    #0f172a;
+}
+
+html[data-wallpaper="noir"] .os-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 55%),
+    linear-gradient(180deg, #09090b 0%, #18181b 55%, #27272a 100%);
+}
+
+.os-window {
+  border-radius: var(--os-radius);
+  background: var(--os-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--os-fg);
+}
+
+html[data-look="3d"] .os-window {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+html[data-look="2d"] .os-window {
+  box-shadow: none;
+}
+
+.os-window-focused {
+  border-color: rgba(var(--os-primary-rgb), 0.65);
+}
+
+html[data-look="3d"] .os-window-focused {
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(var(--os-primary-rgb), 0.35);
+}
+
+.os-titlebar {
+  flex-shrink: 0;
+  min-height: var(--os-title-h);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html[data-style="classic"] .os-titlebar {
+  background: rgba(var(--os-primary-rgb), 0.25);
+}
+
+html[data-style="glass"] .os-window,
+html[data-style="glass"] .os-taskbar,
+html[data-style="glass"] .os-startmenu,
+html[data-style="glass"] .os-notif-center,
+html[data-style="glass"] .os-toast {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.os-win-btn {
+  width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.75;
+}
+.os-win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+.os-win-btn-close:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.os-taskbar {
+  height: var(--os-taskbar-h);
+  background: var(--os-panel);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* Keep tray pinned even if a parent transform creates a new containing block */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+html[data-look="3d"] .os-taskbar {
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.os-task-btn {
+  width: 36px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--os-fg);
+}
+.os-task-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.os-task-btn-active,
+.os-task-btn-open {
+  background: rgba(var(--os-primary-rgb), 0.25);
+  box-shadow: inset 0 -2px 0 var(--os-primary);
+}
+
+.os-task-window {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  max-width: 140px;
+}
+.os-task-window:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.os-startmenu,
+.os-notif-center {
+  background: var(--os-panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--os-radius);
+}
+
+html[data-look="3d"] .os-startmenu,
+html[data-look="3d"] .os-notif-center {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.os-start-item {
+  border-radius: 10px;
+}
+.os-start-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.os-toast {
+  background: var(--os-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--os-radius);
+}
+html[data-look="3d"] .os-toast {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.os-toast-success {
+  border-left: 3px solid #22c55e;
+}
+.os-toast-error {
+  border-left: 3px solid #ef4444;
+}
+.os-toast-warning {
+  border-left: 3px solid #f59e0b;
+}
+.os-toast-info {
+  border-left: 3px solid var(--os-primary);
+}
+
+.os-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--os-fg);
+}
+.os-tool-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+.os-tool-btn:disabled {
+  opacity: 0.35;
+}
+
+.os-input {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #f1f5f9;
+  padding: 6px 10px;
+  outline: none;
+  color-scheme: dark;
+}
+.os-input::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+.os-input:focus {
+  border-color: rgba(var(--os-primary-rgb), 0.7);
+  box-shadow: 0 0 0 2px rgba(var(--os-primary-rgb), 0.2);
+}
+
+/* Native <select> popup options often ignore parent styles — force readable contrast */
+select.os-input,
+select.os-select {
+  background-color: #0f172a;
+  color: #f8fafc;
+  cursor: pointer;
+}
+select.os-input option,
+select.os-select option,
+select.os-input optgroup,
+select.os-select optgroup {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+select.os-input option:checked,
+select.os-select option:checked,
+select.os-input option:hover,
+select.os-select option:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+.os-desktop-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.os-resize-e {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  width: 6px;
+  bottom: 8px;
+  cursor: ew-resize;
+}
+.os-resize-w {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 6px;
+  bottom: 8px;
+  cursor: ew-resize;
+}
+.os-resize-s {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+.os-resize-n {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  height: 4px;
+  cursor: ns-resize;
+}
+.os-resize-se {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+.os-resize-sw {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+.os-resize-ne {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+.os-resize-nw {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+html[data-style="compact"] .os-task-btn {
+  width: 30px;
+  height: 28px;
+}
