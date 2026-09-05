@@ -33,14 +33,6 @@ export const START_LINKS: StartLink[] = [
       "Free online image tools: compress, resize, crop, convert formats, remove background.",
     image: "https://image-tools-blue-eta.vercel.app/og-image.png",
   },
-  {
-    href: "https://severus.guru/",
-    label: "Severus",
-    title: "Severus | Senior Full Stack Developer & Blockchain & Web3 Specialist",
-    description:
-      "Senior software engineer with ~10 years of experience building websites, e-commerce, blockchain, and enterprise systems.",
-    image: "https://severus.guru/og.png",
-  },
 ];
 
 /** Iframe `src` for a remote tab URL (home is rendered in-app, not as data: HTML). */

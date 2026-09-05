@@ -91,6 +91,15 @@ function persist(pins: StartLink[]) {
   void idbSet("settings", STORAGE_KEY, pins);
 }
 
+function isRetiredDefaultPin(href: string): boolean {
+  try {
+    const host = new URL(href).hostname.replace(/^www\./i, "").toLowerCase();
+    return host === "severus.guru";
+  } catch {
+    return false;
+  }
+}
+
 export const useStartPinsStore = create<StartPinsState>((set, get) => ({
   pins: START_LINKS,
   ready: false,
@@ -98,10 +107,11 @@ export const useStartPinsStore = create<StartPinsState>((set, get) => ({
   init: async () => {
     const saved = await idbGet<StartLink[]>("settings", STORAGE_KEY);
     if (Array.isArray(saved) && saved.length > 0) {
-      set({
-        pins: saved.filter((p) => p && typeof p.href === "string"),
-        ready: true,
-      });
+      const pins = saved.filter(
+        (p) => p && typeof p.href === "string" && !isRetiredDefaultPin(p.href),
+      );
+      set({ pins, ready: true });
+      if (pins.length !== saved.length) persist(pins);
     } else {
       set({ pins: START_LINKS, ready: true });
     }
