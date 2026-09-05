@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ExternalLink, Lock, Plus, RotateCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Lock, Pin, PinOff, Plus, RotateCw } from "lucide-react";
 import { TabStrip, ToolButton, TextInput, AppToolbar } from "@/components/ui";
 import type { BrowserTab } from "./browserUtils";
 
@@ -11,6 +11,9 @@ export function BrowserChrome({
   canBack,
   canForward,
   canOpenExternal,
+  canPin,
+  isPinned,
+  pinBusy,
   onSelectTab,
   onCloseTab,
   onNewTab,
@@ -18,6 +21,7 @@ export function BrowserChrome({
   onForward,
   onReload,
   onOpenExternal,
+  onTogglePin,
   onAddressChange,
   onNavigate,
 }: {
@@ -27,6 +31,9 @@ export function BrowserChrome({
   canBack: boolean;
   canForward: boolean;
   canOpenExternal: boolean;
+  canPin: boolean;
+  isPinned: boolean;
+  pinBusy?: boolean;
   onSelectTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
@@ -34,6 +41,7 @@ export function BrowserChrome({
   onForward: () => void;
   onReload: () => void;
   onOpenExternal: () => void;
+  onTogglePin: () => void;
   onAddressChange: (v: string) => void;
   onNavigate: () => void;
 }) {
@@ -70,6 +78,15 @@ export function BrowserChrome({
             if (e.key === "Enter") onNavigate();
           }}
         />
+        <ToolButton
+          onClick={onTogglePin}
+          disabled={!canPin || pinBusy}
+          title={isPinned ? "Unpin from start page" : "Pin to start page"}
+          aria-label={isPinned ? "Unpin from start page" : "Pin to start page"}
+          className={isPinned ? "text-sky-300" : undefined}
+        >
+          {isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+        </ToolButton>
         <ToolButton
           onClick={onOpenExternal}
           disabled={!canOpenExternal}

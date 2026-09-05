@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import { useWindowStore } from "@/store/windowStore";
 import { useNotifStore } from "@/store/notifStore";
+import {
+  buildStartLink,
+  normalizePinHref,
+  useStartPinsStore,
+} from "@/store/startPinsStore";
 import { AppShell } from "@/components/ui";
 import { BrowserChrome } from "./BrowserChrome";
+import { BrowserStartPage } from "./BrowserStartPage";
 import { FrameBlockedView } from "./FrameBlockedView";
 import { SearchView } from "./SearchView";
 import {
@@ -37,17 +43,39 @@ function pushUrl(tab: BrowserTab, url: string): BrowserTab {
 export function BrowserApp({ windowId }: { windowId: string }) {
   const updateTitle = useWindowStore((s) => s.updateTitle);
   const notify = useNotifStore((s) => s.notify);
+  const initPins = useStartPinsStore((s) => s.init);
+  const pinSite = useStartPinsStore((s) => s.pin);
+  const unpinSite = useStartPinsStore((s) => s.unpin);
+  const pins = useStartPinsStore((s) => s.pins);
   const [tabs, setTabs] = useState<BrowserTab[]>([createHomeTab()]);
   const [activeId, setActiveId] = useState(() => tabs[0].id);
   /** While typing in the omnibox; `null` means show the active tab URL. */
   const [addressDraft, setAddressDraft] = useState<string | null>(null);
   const [frameNonce, setFrameNonce] = useState(0);
+  const [pinBusy, setPinBusy] = useState(false);
+
+  useEffect(() => {
+    void initPins();
+  }, [initPins]);
 
   const active = tabs.find((t) => t.id === activeId) || tabs[0];
   const address =
     addressDraft !== null ? addressDraft : displayAddressForUrl(active.url);
   const searchQuery = extractSearchQuery(active.url);
   const isSearch = isSearchResultsUrl(active.url);
+  const pinTargetUrl =
+    active.url !== BROWSER_HOME && !active.url.startsWith("about:")
+      ? active.url
+      : address.trim()
+        ? normalizeBrowseUrl(address)
+        : "";
+  const canPin =
+    !!pinTargetUrl &&
+    pinTargetUrl !== BROWSER_HOME &&
+    !pinTargetUrl.startsWith("about:") &&
+    /^https?:\/\//i.test(pinTargetUrl);
+  const pagePinned =
+    canPin && pins.some((p) => normalizePinHref(p.href) === normalizePinHref(pinTargetUrl));
   const frameBlocked =
     !isSearch &&
     active.url !== BROWSER_HOME &&
@@ -136,6 +164,43 @@ export function BrowserApp({ windowId }: { windowId: string }) {
     openInSystemBrowser(normalizeBrowseUrl(url));
   };
 
+  const togglePin = () => {
+    if (!canPin || pinBusy) return;
+    if (pagePinned) {
+      unpinSite(pinTargetUrl);
+      notify({
+        title: "Unpinned",
+        body: "Removed from start page",
+        level: "info",
+        appId: "browser",
+        windowId,
+      });
+      return;
+    }
+    setPinBusy(true);
+    void buildStartLink(pinTargetUrl)
+      .then((link) => {
+        pinSite(link);
+        notify({
+          title: "Pinned",
+          body: `${link.label} added to start page`,
+          level: "info",
+          appId: "browser",
+          windowId,
+        });
+      })
+      .catch(() => {
+        notify({
+          title: "Pin failed",
+          body: "Could not pin this page",
+          level: "error",
+          appId: "browser",
+          windowId,
+        });
+      })
+      .finally(() => setPinBusy(false));
+  };
+
   return (
     <AppShell className="bg-[#0f172a]">
       <BrowserChrome
@@ -145,6 +210,9 @@ export function BrowserApp({ windowId }: { windowId: string }) {
         canBack={active.histIdx > 0}
         canForward={active.histIdx < active.history.length - 1}
         canOpenExternal={!!address && active.url !== BROWSER_HOME}
+        canPin={canPin}
+        isPinned={pagePinned}
+        pinBusy={pinBusy}
         onSelectTab={(id) => {
           setActiveId(id);
           setAddressDraft(null);
@@ -170,10 +238,13 @@ export function BrowserApp({ windowId }: { windowId: string }) {
           if (active.url !== BROWSER_HOME) navigate(active.url);
         }}
         onOpenExternal={openExternal}
+        onTogglePin={togglePin}
         onAddressChange={setAddressDraft}
         onNavigate={() => navigate(address || BROWSER_HOME)}
       />
-      {isSearch ? (
+      {active.url === BROWSER_HOME ? (
+        <BrowserStartPage onNavigate={navigate} />
+      ) : isSearch ? (
         <SearchView
           query={searchQuery || ""}
           onSearchExternal={openSearchExternal}

@@ -1,52 +1,51 @@
 export const BROWSER_HOME = "about:home";
 
-const START_LINKS = [
-  { href: "https://free-dev-tools.com/", label: "DevToolBox" },
-  { href: "https://text-tools-iota.vercel.app/", label: "TextTools" },
-  { href: "https://image-tools-blue-eta.vercel.app/", label: "ImageTools" },
-  { href: "https://severus.guru/", label: "Severus" },
-] as const;
+export type StartLink = {
+  href: string;
+  label: string;
+  title: string;
+  description: string;
+  image: string;
+};
 
-export function browserHomeHtml(): string {
-  const links = START_LINKS.map((l) => `<a href="${l.href}">${l.label}</a>`).join(
-    "\n",
-  );
+/** Curated start destinations with Open Graph card metadata. */
+export const START_LINKS: StartLink[] = [
+  {
+    href: "https://free-dev-tools.com/",
+    label: "DevToolBox",
+    title: "Online Dev Tools - Free Developer Utilities",
+    description:
+      "Free online developer tools: JSON formatter, JWT decoder, Base64 encoder, Unix timestamp converter, regex tester, and more.",
+    image: "https://free-dev-tools.com/assets/image.png",
+  },
+  {
+    href: "https://text-tools-iota.vercel.app/",
+    label: "TextTools",
+    title: "TextTools - Free Online Text Utilities",
+    description: "Word counter, case converter, text sorter, and more. No sign-in required.",
+    image: "https://text-tools-iota.vercel.app/opengraph-image.png",
+  },
+  {
+    href: "https://image-tools-blue-eta.vercel.app/",
+    label: "ImageTools",
+    title: "ImageTools - Quick Image Utilities",
+    description:
+      "Free online image tools: compress, resize, crop, convert formats, remove background.",
+    image: "https://image-tools-blue-eta.vercel.app/og-image.png",
+  },
+  {
+    href: "https://severus.guru/",
+    label: "Severus",
+    title: "Severus | Senior Full Stack Developer & Blockchain & Web3 Specialist",
+    description:
+      "Senior software engineer with ~10 years of experience building websites, e-commerce, blockchain, and enterprise systems.",
+    image: "https://severus.guru/og.png",
+  },
+];
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Requiroom Start</title>
-<style>
-body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:40px}
-h1{font-size:28px;margin:0 0 8px}p{opacity:.8;max-width:42rem;line-height:1.5}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:24px}
-a{display:block;padding:16px;background:#1e293b;border-radius:12px;color:#93c5fd;text-decoration:none}
-a:hover{background:#334155}
-.note{margin-top:32px;padding:16px;background:#1e293b;border-radius:12px;font-size:14px;opacity:.85;max-width:42rem;line-height:1.45}
-</style></head><body>
-<h1>Requiroom Start</h1>
-<p>Direct browsing — pages load in this frame from their own origin (same as a normal browser iframe).</p>
-<div class="grid">
-${links}
-</div>
-<div class="note"><strong>Note:</strong> Sites like GitHub that send <code>X-Frame-Options</code> or strict <code>frame-ancestors</code> CSP cannot load in this frame — use <strong>Open in system browser</strong> in the toolbar.</div>
-<script>
-document.addEventListener("click", function (e) {
-  var a = e.target && e.target.closest && e.target.closest("a[href]");
-  if (!a) return;
-  var href = a.getAttribute("href");
-  if (!href || href.charAt(0) === "#") return;
-  e.preventDefault();
-  try {
-    parent.postMessage({ type: "requiroom:navigate", url: href }, "*");
-  } catch (err) {}
-});
-</script>
-</body></html>`;
-}
-
-/** Iframe `src` for a tab URL — direct navigation (no `/api/proxy`). */
+/** Iframe `src` for a remote tab URL (home is rendered in-app, not as data: HTML). */
 export function frameSrc(url: string): string {
-  if (url === BROWSER_HOME || url.startsWith("about:")) {
-    return `data:text/html;charset=utf-8,${encodeURIComponent(browserHomeHtml())}`;
-  }
+  if (url === BROWSER_HOME || url.startsWith("about:")) return "about:blank";
   return url;
 }
 
@@ -64,7 +63,6 @@ export function normalizeBrowseUrl(raw: string): string {
 /** Bare hostnames like `example.com` — not search phrases. */
 function looksLikeHostname(raw: string): boolean {
   if (raw.includes(" ") || raw.includes("://")) return false;
-  // require a dot and no path-like junk without scheme
   if (!/^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(raw)) return false;
   return true;
 }

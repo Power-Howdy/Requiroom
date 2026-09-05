@@ -279,6 +279,13 @@ html[data-wallpaper="vanishing"] .os-wallpaper {
     url("/wallpapers/vanishing.jpg") center / cover no-repeat;
 }
 
+/* Browser start page — soft scrim over the shared desktop wallpaper */
+.browser-start-scrim {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(2, 6, 23, 0.28), rgba(2, 6, 23, 0.62) 72%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.35) 0%, rgba(2, 6, 23, 0.7) 100%);
+}
+
 .os-window {
   border-radius: var(--os-radius);
   background: var(--os-surface);
